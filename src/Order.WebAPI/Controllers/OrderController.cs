@@ -24,6 +24,22 @@ namespace OrderService.WebAPI.Controllers
             var orders = await _orderService.GetOrdersAsync();
             return Ok(orders);
         }
+        
+        [HttpGet("by-status")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetOrdersByStatus([FromQuery] Guid statusId)
+        {
+            if (statusId == Guid.Empty)
+            {
+                return BadRequest("Order status ID cannot be empty.");
+            }
+            
+            var orders = await _orderService.GetOrdersByStatusIdAsync(statusId);
+            return Ok(orders);
+        }
+        
+        
 
         [HttpGet("{orderId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]

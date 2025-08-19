@@ -39,6 +39,32 @@ namespace Order.Data
             return orders;
         }
 
+        public async Task<IEnumerable<OrderSummary>> GetOrdersByStatusIdAsync(Guid statusId)
+        {
+           var statusIdBytes = statusId.ToByteArray();
+               
+           var orders = await _orderContext.Order
+               .Where(x => _orderContext.Database.IsInMemory() ? x.StatusId.SequenceEqual(statusIdBytes) : x.StatusId == statusIdBytes)
+               .Include(x => x.Items)
+               .Include(x => x.Status)
+               .Select(x => new OrderSummary
+               {
+                   Id = new Guid(x.Id),
+                   ResellerId = new Guid(x.ResellerId),
+                   CustomerId = new Guid(x.CustomerId),
+                   StatusId = new Guid(x.StatusId),
+                   StatusName = x.Status.Name,
+                   ItemCount = x.Items.Count,
+                   TotalCost = x.Items.Sum(i => i.Quantity * i.Product.UnitCost).Value,
+                   TotalPrice = x.Items.Sum(i => i.Quantity * i.Product.UnitPrice).Value,
+                   CreatedDate = x.CreatedDate
+               })
+               .OrderByDescending(x => x.CreatedDate)
+               .ToListAsync();
+
+           return orders;
+        }
+
         public async Task<OrderDetail> GetOrderByIdAsync(Guid orderId)
         {
             var orderIdBytes = orderId.ToByteArray();
