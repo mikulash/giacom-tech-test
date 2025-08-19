@@ -32,5 +32,20 @@ namespace Order.Service
             var order = await _orderRepository.GetOrderByIdAsync(orderId);
             return order;
         }
+
+        public async Task<Result<bool>> UpdateOrderStatusAsync(Guid orderId, Guid statusId)
+        {
+            if (orderId == Guid.Empty)
+            {
+                return Result<bool>.BadRequest("Order ID cannot be empty.");
+            }
+
+            if (statusId == Guid.Empty)
+            {
+                return Result<bool>.BadRequest("Status ID cannot be empty.");
+            }
+            
+            return await _orderRepository.UpdateOrderStatusAsync(orderId, statusId);
+        }
     }
 }

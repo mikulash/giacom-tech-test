@@ -70,7 +70,9 @@ namespace Order.Data
             var orderIdBytes = orderId.ToByteArray();
 
             var order = await _orderContext.Order
-                .Where(x => _orderContext.Database.IsInMemory() ? x.Id.SequenceEqual(orderIdBytes) : x.Id == orderIdBytes)
+                .Where(x => _orderContext.Database.IsInMemory()
+                    ? x.Id.SequenceEqual(orderIdBytes)
+                    : x.Id == orderIdBytes)
                 .Select(x => new OrderDetail
                 {
                     Id = new Guid(x.Id),
@@ -96,8 +98,46 @@ namespace Order.Data
                         Quantity = i.Quantity.Value
                     })
                 }).SingleOrDefaultAsync();
-            
+
             return order;
+        }
+
+        public async Task<Result<bool>> UpdateOrderStatusAsync(Guid orderId, Guid statusId)
+        {
+            var orderIdBytes = orderId.ToByteArray();
+            var statusIdBytes = statusId.ToByteArray();
+
+            var order = await _orderContext.Order
+                .Where(x => _orderContext.Database.IsInMemory()
+                    ? x.Id.SequenceEqual(orderIdBytes)
+                    : x.Id == orderIdBytes)
+                .FirstOrDefaultAsync();
+
+            if (order == null)
+            {
+                return Result<bool>.NotFound("Order not found.");
+            }
+            
+            var statusExists = await _orderContext.OrderStatus.AnyAsync(s => _orderContext.Database.IsInMemory()
+                    ? s.Id.SequenceEqual(statusIdBytes)
+                    : s.Id == statusIdBytes);
+
+            if (!statusExists)
+            {
+                return Result<bool>.BadRequest("Status ID is not existing");
+            }
+
+            order.StatusId = statusIdBytes;
+
+            try
+            {
+                await _orderContext.SaveChangesAsync();
+                return Result<bool>.NoContent();
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.BadRequest(ex.Message);
+            }
         }
     }
 }

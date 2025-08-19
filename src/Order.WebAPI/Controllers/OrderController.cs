@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Order.Service;
 using System;
+using System.Net;
 using System.Threading.Tasks;
+using Order.Model;
 
 namespace OrderService.WebAPI.Controllers
 {
@@ -55,6 +57,36 @@ namespace OrderService.WebAPI.Controllers
             {
                 return NotFound();
             }
+        }
+        
+        [HttpPatch("{orderId}/status")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateOrderStatus(Guid orderId, [FromBody] UpdateOrderStatusRequest request)
+        {
+            Console.WriteLine("PATCH STATUS, orderID: " + orderId + ", statusId: " + request.StatusId);
+            Console.WriteLine("PATCH STATUS, REQUEST: " + request);
+            
+            if (orderId == Guid.Empty)
+            {
+                return BadRequest("Order ID cannot be empty.");
+            }
+
+            if (request.StatusId == Guid.Empty)
+            {
+                return BadRequest("Valid status ID is required.");
+            }
+
+            var result = await _orderService.UpdateOrderStatusAsync(orderId, request.StatusId);
+            
+            return result.StatusCode switch
+            {
+                HttpStatusCode.NoContent => NoContent(),
+                HttpStatusCode.NotFound => NotFound(result.Message),
+                HttpStatusCode.BadRequest => BadRequest(result.Message),
+                _ => StatusCode(500, "An unexpected error occurred.")
+            };
         }
     }
 }

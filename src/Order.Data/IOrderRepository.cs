@@ -11,5 +11,6 @@ namespace Order.Data
         Task<IEnumerable<OrderSummary>> GetOrdersByStatusIdAsync(Guid statusId);
 
         Task<OrderDetail> GetOrderByIdAsync(Guid orderId);
+        Task<Result<bool>> UpdateOrderStatusAsync(Guid orderId, Guid statusId);
     }
 }
