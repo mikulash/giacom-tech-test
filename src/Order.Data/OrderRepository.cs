@@ -181,11 +181,11 @@ namespace Order.Data
             }
         }
 
-        public async Task<Result<Guid>> CreateOrderAsync(CreateOrderDto newOrderDto)
+        public async Task<Result<Guid>> CreateOrderAsync(CreateOrderRequest newOrderRequest)
         {
-            var resellerIdBytes = newOrderDto.ResellerId.ToByteArray();
-            var customerIdBytes = newOrderDto.CustomerId.ToByteArray();
-            var statusIdBytes = newOrderDto.StatusId.ToByteArray();
+            var resellerIdBytes = newOrderRequest.ResellerId.ToByteArray();
+            var customerIdBytes = newOrderRequest.CustomerId.ToByteArray();
+            var statusIdBytes = newOrderRequest.StatusId.ToByteArray();
             
             var statusExists = await _orderContext.OrderStatus.AnyAsync(s => _orderContext.Database.IsInMemory()
                 ? s.Id.SequenceEqual(statusIdBytes)

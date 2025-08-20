@@ -2,7 +2,7 @@ using System;
 
 namespace Order.Model;
 
-public class CreateOrderDto
+public class CreateOrderRequest
 {
     public Guid ResellerId { get; set; }
     public Guid CustomerId { get; set; }

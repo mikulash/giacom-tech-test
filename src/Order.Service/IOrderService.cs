@@ -13,6 +13,6 @@ namespace Order.Service
         Task<Result<IEnumerable<MonthlyProfit>>> GetMonthlyProfitAsync();
         
         Task<Result<bool>> UpdateOrderStatusAsync(Guid orderId, Guid statusId);
-        Task<Result<Guid>> CreateOrderAsync(CreateOrderDto order);
+        Task<Result<Guid>> CreateOrderAsync(CreateOrderRequest order);
     }
 }

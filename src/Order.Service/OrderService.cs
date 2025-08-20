@@ -53,7 +53,7 @@ namespace Order.Service
             return await _orderRepository.UpdateOrderStatusAsync(orderId, statusId);
         }
 
-        public async Task<Result<Guid>> CreateOrderAsync(CreateOrderDto order)
+        public async Task<Result<Guid>> CreateOrderAsync(CreateOrderRequest order)
         {
             if (order.ResellerId == Guid.Empty)
             {

@@ -92,14 +92,14 @@ namespace OrderService.WebAPI.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDto dto)
+        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var result = await _orderService.CreateOrderAsync(dto);
+            var result = await _orderService.CreateOrderAsync(request);
     
             return result.StatusCode switch
             {
