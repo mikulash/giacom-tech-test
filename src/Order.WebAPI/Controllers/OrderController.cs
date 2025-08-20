@@ -88,5 +88,25 @@ namespace OrderService.WebAPI.Controllers
                 _ => StatusCode(500, "An unexpected error occurred.")
             };
         }
+        
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = await _orderService.CreateOrderAsync(dto);
+    
+            return result.StatusCode switch
+            {
+                HttpStatusCode.Created => CreatedAtAction(nameof(GetOrderById), new {orderId = result.Data}, result.Data),
+                HttpStatusCode.BadRequest => BadRequest(result.Message),
+                _ => StatusCode(500, "An unexpected error occurred.")
+            };
+        }
     }
 }

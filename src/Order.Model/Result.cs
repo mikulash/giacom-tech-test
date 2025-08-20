@@ -18,6 +18,8 @@ public class Result<T>
 
     public static Result<T> Success(T data, string message = null)
         => new(HttpStatusCode.OK, data, message);
+    
+    public static Result<T> Created(T data, string message = null) => new(HttpStatusCode.Created, data, message);
 
     public static Result<T> NoContent(string message = null)
         => new(HttpStatusCode.NoContent, default(T), message);

@@ -12,5 +12,6 @@ namespace Order.Service
         
         Task<OrderDetail> GetOrderByIdAsync(Guid orderId);
         Task<Result<bool>> UpdateOrderStatusAsync(Guid orderId, Guid statusId);
+        Task<Result<Guid>> CreateOrderAsync(CreateOrderDto order);
     }
 }

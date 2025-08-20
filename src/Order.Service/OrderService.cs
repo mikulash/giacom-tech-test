@@ -47,5 +47,25 @@ namespace Order.Service
             
             return await _orderRepository.UpdateOrderStatusAsync(orderId, statusId);
         }
+
+        public async Task<Result<Guid>> CreateOrderAsync(CreateOrderDto order)
+        {
+            if (order.ResellerId == Guid.Empty)
+            {
+                return Result<Guid>.BadRequest("Reseller ID cannot be empty.");
+            }
+
+            if (order.CustomerId == Guid.Empty)
+            {
+                return Result<Guid>.BadRequest("Customer ID cannot be empty.");
+            }
+
+            if (order.StatusId == Guid.Empty)
+            {
+                return Result<Guid>.BadRequest("Status ID cannot be empty.");           
+            }
+            
+            return await _orderRepository.CreateOrderAsync(order);
+        }
     }
 }

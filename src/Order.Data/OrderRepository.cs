@@ -139,5 +139,41 @@ namespace Order.Data
                 return Result<bool>.BadRequest(ex.Message);
             }
         }
+
+        public async Task<Result<Guid>> CreateOrderAsync(CreateOrderDto newOrderDto)
+        {
+            var resellerIdBytes = newOrderDto.ResellerId.ToByteArray();
+            var customerIdBytes = newOrderDto.CustomerId.ToByteArray();
+            var statusIdBytes = newOrderDto.StatusId.ToByteArray();
+            
+            var statusExists = await _orderContext.OrderStatus.AnyAsync(s => _orderContext.Database.IsInMemory()
+                ? s.Id.SequenceEqual(statusIdBytes)
+                : s.Id == statusIdBytes);
+
+            if (!statusExists)
+            {
+                return Result<Guid>.BadRequest("Status ID is not existing");
+            }
+            
+            var order = new Data.Entities.Order {
+                Id = Guid.NewGuid().ToByteArray(),
+                ResellerId = resellerIdBytes,
+                CustomerId = customerIdBytes,
+                StatusId = statusIdBytes,
+                CreatedDate = DateTime.UtcNow
+            };
+
+            _orderContext.Order.Add(order);
+            
+            await _orderContext.SaveChangesAsync();
+            
+            if (order.Id == null)
+            {
+                return Result<Guid>.BadRequest("Failed to create order.");
+            }
+            
+            return Result<Guid>.Created(new Guid(order.Id));
+
+        }
     }
 }
