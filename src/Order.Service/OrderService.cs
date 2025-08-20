@@ -32,6 +32,11 @@ namespace Order.Service
             var order = await _orderRepository.GetOrderByIdAsync(orderId);
             return order;
         }
+        
+        public async Task<Result<IEnumerable<MonthlyProfit>>> GetMonthlyProfitAsync()
+        {
+            return await _orderRepository.GetMonthlyProfitAsync();
+        }
 
         public async Task<Result<bool>> UpdateOrderStatusAsync(Guid orderId, Guid statusId)
         {

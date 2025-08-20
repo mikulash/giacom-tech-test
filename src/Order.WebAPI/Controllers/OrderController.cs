@@ -108,5 +108,20 @@ namespace OrderService.WebAPI.Controllers
                 _ => StatusCode(500, "An unexpected error occurred.")
             };
         }
+        
+        [HttpGet("profit/monthly")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetMonthlyProfit([FromQuery] int? year = null)
+        {
+            var result = await _orderService.GetMonthlyProfitAsync();
+    
+            return result.StatusCode switch
+            {
+                HttpStatusCode.OK => Ok(result.Data),
+                HttpStatusCode.BadRequest => BadRequest(result.Message),
+                _ => StatusCode(500, "An unexpected error occurred.")
+            };
+        }
     }
 }

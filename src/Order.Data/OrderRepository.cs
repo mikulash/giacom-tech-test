@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Order.Data.Entities;
 
 namespace Order.Data
 {
@@ -100,6 +101,46 @@ namespace Order.Data
                 }).SingleOrDefaultAsync();
 
             return order;
+        }
+
+        public async Task<Result<IEnumerable<MonthlyProfit>>> GetMonthlyProfitAsync()
+        {
+            try
+            {
+                var completedStatusId = await _orderContext.Set<OrderStatus>()
+                    .Where(s => s.Name.ToLower() == "completed")
+                    .Select(s => s.Id)
+                    .FirstOrDefaultAsync();
+                
+                var orderItemData = await _orderContext.OrderItem
+                    .Include(oi => oi.Order)
+                    .Include(oi => oi.Product)
+                    .Where(oi => oi.Order.StatusId == completedStatusId)
+                    .Where(oi => oi.Quantity.HasValue)
+                    .Select(oi => new
+                    {
+                        oi.Order.CreatedDate,
+                        ProfitOnItem = (oi.Product.UnitPrice - oi.Product.UnitCost) * oi.Quantity.Value
+                    })
+                    .ToListAsync(); 
+                
+                var monthlyProfits = orderItemData
+                    .GroupBy(x => new { x.CreatedDate.Year, x.CreatedDate.Month })
+                    .Select(g => new MonthlyProfit
+                    {
+                        Year = g.Key.Year,
+                        Month = g.Key.Month,
+                        Profit = g.Sum(x => x.ProfitOnItem)
+                    })
+                    .OrderBy(x => x.Year).ThenBy(x => x.Month)
+                    .ToList();
+                
+                return Result<IEnumerable<MonthlyProfit>>.Success(monthlyProfits, $"Retrieved monthly profit data for {monthlyProfits.Count()} months.");
+            }
+            catch (Exception ex)
+            {
+                return Result<IEnumerable<MonthlyProfit>>.BadRequest($"Error calculating monthly profit: {ex.Message}");
+            } 
         }
 
         public async Task<Result<bool>> UpdateOrderStatusAsync(Guid orderId, Guid statusId)
