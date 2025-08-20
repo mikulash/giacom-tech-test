@@ -64,9 +64,6 @@ namespace OrderService.WebAPI.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateOrderStatus(Guid orderId, [FromBody] UpdateOrderStatusRequest request)
         {
-            Console.WriteLine("PATCH STATUS, orderID: " + orderId + ", statusId: " + request.StatusId);
-            Console.WriteLine("PATCH STATUS, REQUEST: " + request);
-
             if (orderId == Guid.Empty)
             {
                 return BadRequest("Order ID cannot be empty.");
@@ -93,13 +90,9 @@ namespace OrderService.WebAPI.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var result = await _orderService.CreateOrderAsync(request);
 
+            // if successful, returns also the location of the new resource
             return result.StatusCode switch
             {
                 HttpStatusCode.Created => CreatedAtAction(nameof(GetOrderById), new { orderId = result.Data },

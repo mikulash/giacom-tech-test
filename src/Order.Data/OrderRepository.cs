@@ -165,6 +165,7 @@ namespace Order.Data
                 return Result<bool>.NotFound("Order not found.");
             }
 
+            // needs to be existing status
             var statusExists = await _orderContext.OrderStatus.AnyAsync(s => _orderContext.Database.IsInMemory()
                 ? s.Id.SequenceEqual(statusIdBytes)
                 : s.Id == statusIdBytes);
@@ -202,6 +203,7 @@ namespace Order.Data
                 return Result<Guid>.BadRequest("Status ID is not existing");
             }
 
+            // i think the preferred way would be to generate the ID and set status to the default value in the database
             var order = new Data.Entities.Order
             {
                 Id = Guid.NewGuid().ToByteArray(),
