@@ -2,7 +2,9 @@ using System.Net;
 
 namespace Order.Model;
 
+// I added a result pattern class for better informing user about errors and results of operations.
 public class Result<T>
+
 {
     public HttpStatusCode StatusCode { get; private set; }
     public T Data { get; private set; }
