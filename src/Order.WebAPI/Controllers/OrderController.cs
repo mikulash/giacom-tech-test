@@ -26,7 +26,7 @@ namespace OrderService.WebAPI.Controllers
             var orders = await _orderService.GetOrdersAsync();
             return Ok(orders);
         }
-        
+
         [HttpGet("by-status")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -36,12 +36,11 @@ namespace OrderService.WebAPI.Controllers
             {
                 return BadRequest("Order status ID cannot be empty.");
             }
-            
+
             var orders = await _orderService.GetOrdersByStatusIdAsync(statusId);
             return Ok(orders);
         }
-        
-        
+
 
         [HttpGet("{orderId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -58,7 +57,7 @@ namespace OrderService.WebAPI.Controllers
                 return NotFound();
             }
         }
-        
+
         [HttpPatch("{orderId}/status")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -67,7 +66,7 @@ namespace OrderService.WebAPI.Controllers
         {
             Console.WriteLine("PATCH STATUS, orderID: " + orderId + ", statusId: " + request.StatusId);
             Console.WriteLine("PATCH STATUS, REQUEST: " + request);
-            
+
             if (orderId == Guid.Empty)
             {
                 return BadRequest("Order ID cannot be empty.");
@@ -79,7 +78,7 @@ namespace OrderService.WebAPI.Controllers
             }
 
             var result = await _orderService.UpdateOrderStatusAsync(orderId, request.StatusId);
-            
+
             return result.StatusCode switch
             {
                 HttpStatusCode.NoContent => NoContent(),
@@ -88,7 +87,7 @@ namespace OrderService.WebAPI.Controllers
                 _ => StatusCode(500, "An unexpected error occurred.")
             };
         }
-        
+
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -100,22 +99,23 @@ namespace OrderService.WebAPI.Controllers
             }
 
             var result = await _orderService.CreateOrderAsync(request);
-    
+
             return result.StatusCode switch
             {
-                HttpStatusCode.Created => CreatedAtAction(nameof(GetOrderById), new {orderId = result.Data}, result.Data),
+                HttpStatusCode.Created => CreatedAtAction(nameof(GetOrderById), new { orderId = result.Data },
+                    result.Data),
                 HttpStatusCode.BadRequest => BadRequest(result.Message),
                 _ => StatusCode(500, "An unexpected error occurred.")
             };
         }
-        
+
         [HttpGet("profit/monthly")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetMonthlyProfit([FromQuery] int? year = null)
         {
             var result = await _orderService.GetMonthlyProfitAsync();
-    
+
             return result.StatusCode switch
             {
                 HttpStatusCode.OK => Ok(result.Data),

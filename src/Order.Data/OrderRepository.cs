@@ -42,28 +42,31 @@ namespace Order.Data
 
         public async Task<IEnumerable<OrderSummary>> GetOrdersByStatusIdAsync(Guid statusId)
         {
-           var statusIdBytes = statusId.ToByteArray();
-               
-           var orders = await _orderContext.Order
-               .Where(x => _orderContext.Database.IsInMemory() ? x.StatusId.SequenceEqual(statusIdBytes) : x.StatusId == statusIdBytes)
-               .Include(x => x.Items)
-               .Include(x => x.Status)
-               .Select(x => new OrderSummary
-               {
-                   Id = new Guid(x.Id),
-                   ResellerId = new Guid(x.ResellerId),
-                   CustomerId = new Guid(x.CustomerId),
-                   StatusId = new Guid(x.StatusId),
-                   StatusName = x.Status.Name,
-                   ItemCount = x.Items.Count,
-                   TotalCost = x.Items.Sum(i => i.Quantity * i.Product.UnitCost).Value,
-                   TotalPrice = x.Items.Sum(i => i.Quantity * i.Product.UnitPrice).Value,
-                   CreatedDate = x.CreatedDate
-               })
-               .OrderByDescending(x => x.CreatedDate)
-               .ToListAsync();
+            var statusIdBytes = statusId.ToByteArray();
 
-           return orders;
+            // here returning the orders in the same format as existing GetOrdersAsync() method
+            var orders = await _orderContext.Order
+                .Where(x => _orderContext.Database.IsInMemory()
+                    ? x.StatusId.SequenceEqual(statusIdBytes)
+                    : x.StatusId == statusIdBytes)
+                .Include(x => x.Items)
+                .Include(x => x.Status)
+                .Select(x => new OrderSummary
+                {
+                    Id = new Guid(x.Id),
+                    ResellerId = new Guid(x.ResellerId),
+                    CustomerId = new Guid(x.CustomerId),
+                    StatusId = new Guid(x.StatusId),
+                    StatusName = x.Status.Name,
+                    ItemCount = x.Items.Count,
+                    TotalCost = x.Items.Sum(i => i.Quantity * i.Product.UnitCost).Value,
+                    TotalPrice = x.Items.Sum(i => i.Quantity * i.Product.UnitPrice).Value,
+                    CreatedDate = x.CreatedDate
+                })
+                .OrderByDescending(x => x.CreatedDate)
+                .ToListAsync();
+
+            return orders;
         }
 
         public async Task<OrderDetail> GetOrderByIdAsync(Guid orderId)
@@ -107,11 +110,13 @@ namespace Order.Data
         {
             try
             {
+                // get the correct status id to avoid JOIN on tables
                 var completedStatusId = await _orderContext.Set<OrderStatus>()
                     .Where(s => s.Name.ToLower() == "completed")
                     .Select(s => s.Id)
                     .FirstOrDefaultAsync();
-                
+
+                // load the data into memory to allow grouping by month
                 var orderItemData = await _orderContext.OrderItem
                     .Include(oi => oi.Order)
                     .Include(oi => oi.Product)
@@ -122,8 +127,8 @@ namespace Order.Data
                         oi.Order.CreatedDate,
                         ProfitOnItem = (oi.Product.UnitPrice - oi.Product.UnitCost) * oi.Quantity.Value
                     })
-                    .ToListAsync(); 
-                
+                    .ToListAsync();
+
                 var monthlyProfits = orderItemData
                     .GroupBy(x => new { x.CreatedDate.Year, x.CreatedDate.Month })
                     .Select(g => new MonthlyProfit
@@ -134,13 +139,14 @@ namespace Order.Data
                     })
                     .OrderBy(x => x.Year).ThenBy(x => x.Month)
                     .ToList();
-                
-                return Result<IEnumerable<MonthlyProfit>>.Success(monthlyProfits, $"Retrieved monthly profit data for {monthlyProfits.Count()} months.");
+
+                return Result<IEnumerable<MonthlyProfit>>.Success(monthlyProfits,
+                    $"Retrieved monthly profit data for {monthlyProfits.Count} months.");
             }
             catch (Exception ex)
             {
                 return Result<IEnumerable<MonthlyProfit>>.BadRequest($"Error calculating monthly profit: {ex.Message}");
-            } 
+            }
         }
 
         public async Task<Result<bool>> UpdateOrderStatusAsync(Guid orderId, Guid statusId)
@@ -158,10 +164,10 @@ namespace Order.Data
             {
                 return Result<bool>.NotFound("Order not found.");
             }
-            
+
             var statusExists = await _orderContext.OrderStatus.AnyAsync(s => _orderContext.Database.IsInMemory()
-                    ? s.Id.SequenceEqual(statusIdBytes)
-                    : s.Id == statusIdBytes);
+                ? s.Id.SequenceEqual(statusIdBytes)
+                : s.Id == statusIdBytes);
 
             if (!statusExists)
             {
@@ -186,7 +192,7 @@ namespace Order.Data
             var resellerIdBytes = newOrderRequest.ResellerId.ToByteArray();
             var customerIdBytes = newOrderRequest.CustomerId.ToByteArray();
             var statusIdBytes = newOrderRequest.StatusId.ToByteArray();
-            
+
             var statusExists = await _orderContext.OrderStatus.AnyAsync(s => _orderContext.Database.IsInMemory()
                 ? s.Id.SequenceEqual(statusIdBytes)
                 : s.Id == statusIdBytes);
@@ -195,8 +201,9 @@ namespace Order.Data
             {
                 return Result<Guid>.BadRequest("Status ID is not existing");
             }
-            
-            var order = new Data.Entities.Order {
+
+            var order = new Data.Entities.Order
+            {
                 Id = Guid.NewGuid().ToByteArray(),
                 ResellerId = resellerIdBytes,
                 CustomerId = customerIdBytes,
@@ -205,16 +212,15 @@ namespace Order.Data
             };
 
             _orderContext.Order.Add(order);
-            
+
             await _orderContext.SaveChangesAsync();
-            
+
             if (order.Id == null)
             {
                 return Result<Guid>.BadRequest("Failed to create order.");
             }
-            
-            return Result<Guid>.Created(new Guid(order.Id));
 
+            return Result<Guid>.Created(new Guid(order.Id));
         }
     }
 }
