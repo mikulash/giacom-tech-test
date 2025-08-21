@@ -120,7 +120,9 @@ namespace Order.Data
                 var orderItemData = await _orderContext.OrderItem
                     .Include(oi => oi.Order)
                     .Include(oi => oi.Product)
-                    .Where(oi => oi.Order.StatusId == completedStatusId)
+                    .Where(oi => _orderContext.Database.IsInMemory()
+                        ? oi.Order.StatusId.SequenceEqual(completedStatusId)
+                        : oi.Order.StatusId == completedStatusId)
                     .Where(oi => oi.Quantity.HasValue)
                     .Select(oi => new
                     {
